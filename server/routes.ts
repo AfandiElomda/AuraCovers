@@ -145,11 +145,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "https://api.paystack.co/transaction/initialize",
         {
           email: validatedData.email,
-          amount: validatedData.amount, // Amount in kobo (cents)
-          currency: "USD",
+          amount: validatedData.amount, // Amount in kobo (100 kobo = 1 NGN)
+          currency: "NGN",
           metadata: {
             userId: guestUserId,
-            credits: 10, // $1 gives 10 downloads
+            credits: 10, // Payment gives 10 downloads
           },
         },
         {
