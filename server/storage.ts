@@ -42,7 +42,14 @@ export class MemStorage implements IStorage {
   async createBookCover(insertBookCover: InsertBookCover): Promise<BookCover> {
     const id = this.currentCoverId++;
     const bookCover: BookCover = { 
-      ...insertBookCover, 
+      bookTitle: insertBookCover.bookTitle,
+      authorName: insertBookCover.authorName,
+      genre: insertBookCover.genre,
+      keywords: insertBookCover.keywords || null,
+      mood: insertBookCover.mood || null,
+      colorPalette: insertBookCover.colorPalette || null,
+      imageUrl: insertBookCover.imageUrl || null,
+      prompt: insertBookCover.prompt || null,
       id,
       createdAt: new Date(),
     };
