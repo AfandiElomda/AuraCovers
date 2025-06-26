@@ -524,10 +524,23 @@ export default function Home() {
                       <div className="mt-6 space-y-4">
                         <Button 
                           onClick={handleDownload}
+                          disabled={downloadMutation.isPending}
                           className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold py-3 px-6 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
                         >
-                          <Download className="mr-2 h-4 w-4" />
-                          Download High-Res Cover
+                          {downloadMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Processing Download...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="mr-2 h-4 w-4" />
+                              Download High-Res Cover
+                              {userStatus && userStatus.freeDownloads === 0 && (
+                                <span className="ml-2 text-xs bg-white/20 px-2 py-1 rounded">$1</span>
+                              )}
+                            </>
+                          )}
                         </Button>
                         
                         <Button 
@@ -557,6 +570,13 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 }

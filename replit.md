@@ -108,9 +108,19 @@ The application follows a modern full-stack architecture with clear separation o
 - **TypeScript**: Real-time type checking and compilation
 - **Database**: Drizzle Kit for schema management and migrations
 
+## Recent Changes
+
+- June 26, 2025: Added Paystack payment integration for freemium model
+  - Implemented 5 free downloads per user with $1 payment for 10 additional downloads
+  - Added user session tracking and download counting
+  - Created PaymentModal component with secure Paystack integration
+  - Updated database schema to support payments and user credits
+  - Added download management with payment validation
+
 ## Changelog
 
-- June 26, 2025. Initial setup
+- June 26, 2025: Payment integration and freemium model implementation
+- June 26, 2025: Initial setup
 
 ## User Preferences
 
