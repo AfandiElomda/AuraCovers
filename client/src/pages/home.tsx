@@ -73,6 +73,8 @@ export default function Home() {
     onSuccess: (data) => {
       if (data.success && data.imageUrl) {
         setGeneratedCover(data.imageUrl);
+        setCurrentCoverId(data.bookCover?.id || null);
+        refetchUserStatus();
         toast({
           title: "Success!",
           description: "Your book cover has been generated successfully.",
@@ -94,13 +96,7 @@ export default function Home() {
     },
   });
 
-  const onSubmit = (data: GenerateCoverRequest) => {
-    generateMutation.mutate(data);
-  };
-
-  const downloadCover = () => {
-    if (!generatedCover) return;
-    
+  const downloadCoverWithText = (imageUrl: string) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
@@ -146,7 +142,54 @@ export default function Home() {
       link.click();
     };
     
-    img.src = generatedCover;
+    img.src = imageUrl;
+  };
+
+  const downloadMutation = useMutation({
+    mutationFn: async (coverId: number): Promise<DownloadResponse> => {
+      const response = await apiRequest("POST", "/api/download-cover", { coverId });
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      if (data.success && data.imageUrl) {
+        downloadCoverWithText(data.imageUrl);
+        refetchUserStatus();
+        toast({
+          title: "Download Started!",
+          description: `Cover downloaded successfully. ${data.remainingFreeDownloads || 0} free downloads remaining.`,
+        });
+      } else if (data.paymentRequired) {
+        setShowPaymentModal(true);
+      }
+    },
+    onError: (error) => {
+      if (error.message.includes("402")) {
+        setShowPaymentModal(true);
+      } else {
+        toast({
+          title: "Download Failed",
+          description: error.message || "Failed to download cover",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+  const onSubmit = (data: GenerateCoverRequest) => {
+    generateMutation.mutate(data);
+  };
+
+  const handleDownload = () => {
+    if (!currentCoverId) return;
+    downloadMutation.mutate(currentCoverId);
+  };
+
+  const handlePaymentSuccess = (credits: number) => {
+    refetchUserStatus();
+    toast({
+      title: "Payment Successful!",
+      description: `You now have ${credits} additional downloads available.`,
+    });
   };
 
   return (
@@ -164,8 +207,28 @@ export default function Home() {
                 <p className="text-sm text-gray-600">AI-Powered Book Cover Generator</p>
               </div>
             </div>
-            <div className="hidden sm:flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Create stunning book covers in seconds</span>
+            <div className="flex items-center space-x-4">
+              <div className="hidden sm:flex items-center space-x-4">
+                <span className="text-sm text-gray-600">Create stunning book covers in seconds</span>
+              </div>
+              {userStatus && (
+                <div className="flex items-center space-x-2">
+                  <Badge variant="secondary" className="flex items-center space-x-1">
+                    <Gift className="h-3 w-3" />
+                    <span>{userStatus.freeDownloads} free downloads</span>
+                  </Badge>
+                  {userStatus.freeDownloads === 0 && (
+                    <Button
+                      size="sm"
+                      onClick={() => setShowPaymentModal(true)}
+                      className="bg-gradient-to-r from-primary to-secondary text-white hover:shadow-lg"
+                    >
+                      <CreditCard className="h-3 w-3 mr-1" />
+                      Buy More
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -460,7 +523,7 @@ export default function Home() {
                       {/* Download Section */}
                       <div className="mt-6 space-y-4">
                         <Button 
-                          onClick={downloadCover}
+                          onClick={handleDownload}
                           className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold py-3 px-6 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
                         >
                           <Download className="mr-2 h-4 w-4" />
