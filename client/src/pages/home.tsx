@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { generateCoverSchema, type GenerateCoverRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -11,17 +11,47 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Book, UserPen, Tags, Lightbulb, Palette, SwatchBook, Download, RefreshCw, CheckCircle, WandSparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Book, UserPen, Tags, Lightbulb, Palette, SwatchBook, Download, RefreshCw, CheckCircle, WandSparkles, CreditCard, Gift } from "lucide-react";
+import PaymentModal from "@/components/PaymentModal";
 
 interface GenerateCoverResponse {
   success: boolean;
   imageUrl?: string;
   error?: string;
+  bookCover?: {
+    id: number;
+  };
+  user?: {
+    freeDownloads: number;
+    totalDownloads: number;
+  };
+}
+
+interface UserStatus {
+  freeDownloads: number;
+  totalDownloads: number;
+}
+
+interface DownloadResponse {
+  success: boolean;
+  imageUrl?: string;
+  remainingFreeDownloads?: number;
+  isPaid?: boolean;
+  error?: string;
+  paymentRequired?: boolean;
 }
 
 export default function Home() {
   const [generatedCover, setGeneratedCover] = useState<string | null>(null);
+  const [currentCoverId, setCurrentCoverId] = useState<number | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { toast } = useToast();
+
+  // Fetch user status
+  const { data: userStatus, refetch: refetchUserStatus } = useQuery<UserStatus>({
+    queryKey: ["/api/user-status"],
+  });
   
   const form = useForm<GenerateCoverRequest>({
     resolver: zodResolver(generateCoverSchema),

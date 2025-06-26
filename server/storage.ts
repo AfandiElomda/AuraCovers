@@ -68,13 +68,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async decrementFreeDownloads(userId: string): Promise<void> {
-    await db
-      .update(users)
-      .set({ 
-        freeDownloads: users.freeDownloads - 1,
-        totalDownloads: users.totalDownloads + 1,
-      })
-      .where(eq(users.id, userId));
+    const user = await this.getUser(userId);
+    if (user) {
+      await db
+        .update(users)
+        .set({ 
+          freeDownloads: user.freeDownloads - 1,
+          totalDownloads: user.totalDownloads + 1,
+        })
+        .where(eq(users.id, userId));
+    }
   }
 
   async createPayment(payment: InsertPayment): Promise<Payment> {
@@ -94,12 +97,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addCreditsToUser(userId: string, credits: number): Promise<void> {
-    await db
-      .update(users)
-      .set({ 
-        freeDownloads: users.freeDownloads + credits,
-      })
-      .where(eq(users.id, userId));
+    const user = await this.getUser(userId);
+    if (user) {
+      await db
+        .update(users)
+        .set({ 
+          freeDownloads: user.freeDownloads + credits,
+        })
+        .where(eq(users.id, userId));
+    }
   }
 }
 
