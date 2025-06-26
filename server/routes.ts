@@ -92,8 +92,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const guestUserId = (req.session as any).userId;
       
+      console.log(`Download request - User ID: ${guestUserId}, Cover ID: ${validatedData.coverId}`);
+      
       const user = await storage.getUser(guestUserId);
       const cover = await storage.getBookCover(validatedData.coverId);
+      
+      console.log(`Found user: ${!!user}, Found cover: ${!!cover}`);
+      if (user) console.log(`User free downloads: ${user.freeDownloads}`);
       
       if (!user || !cover) {
         return res.status(404).json({

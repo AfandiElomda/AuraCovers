@@ -3,14 +3,36 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:5000';
 const testUserId = `test_user_${Date.now()}`;
 
-// Create axios instance with session support
-const client = axios.create({
-  baseURL: BASE_URL,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json'
+// Cookie jar to maintain sessions
+let sessionCookie = null;
+
+// Helper to make requests with session persistence
+async function makeRequest(method, url, data = null) {
+  const config = {
+    method,
+    url: `${BASE_URL}${url}`,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+  
+  if (sessionCookie) {
+    config.headers.Cookie = sessionCookie;
   }
-});
+  
+  if (data) {
+    config.data = data;
+  }
+  
+  const response = await axios(config);
+  
+  // Store session cookie for subsequent requests
+  if (response.headers['set-cookie']) {
+    sessionCookie = response.headers['set-cookie'][0];
+  }
+  
+  return response;
+}
 
 async function testPaymentFlow() {
   console.log('🚀 Starting Payment Flow Test');
@@ -19,7 +41,7 @@ async function testPaymentFlow() {
   try {
     // Step 1: Check initial user status
     console.log('\n1. Checking initial user status...');
-    const initialStatus = await client.get('/api/user-status');
+    const initialStatus = await makeRequest('GET', '/api/user-status');
     console.log('Initial status:', initialStatus.data);
 
     // Step 2: Generate a book cover
@@ -32,7 +54,7 @@ async function testPaymentFlow() {
       mood: "epic"
     };
     
-    const generateResponse = await client.post('/api/generate-cover', coverData);
+    const generateResponse = await makeRequest('POST', '/api/generate-cover', coverData);
     if (generateResponse.data.success) {
       console.log('✅ Cover generated successfully');
       console.log('Cover ID:', generateResponse.data.bookCover?.id);
@@ -45,7 +67,7 @@ async function testPaymentFlow() {
 
     // Step 3: Test first download (should be free)
     console.log('\n3. Testing first download (should be free)...');
-    const downloadResponse = await client.post('/api/download-cover', { coverId });
+    const downloadResponse = await makeRequest('POST', '/api/download-cover', { coverId });
     
     if (downloadResponse.data.success) {
       console.log('✅ Free download successful');
@@ -60,13 +82,13 @@ async function testPaymentFlow() {
     // We'll manually decrease free downloads by making multiple downloads
     for (let i = 2; i <= 5; i++) {
       console.log(`Generating cover ${i}...`);
-      const nextCover = await client.post('/api/generate-cover', {
+      const nextCover = await makeRequest('POST', '/api/generate-cover', {
         ...coverData,
         bookTitle: `Test Book ${i}`
       });
       
       if (nextCover.data.success) {
-        const nextDownload = await client.post('/api/download-cover', { 
+        const nextDownload = await makeRequest('POST', '/api/download-cover', { 
           coverId: nextCover.data.bookCover?.id 
         });
         console.log(`Download ${i}: ${nextDownload.data.success ? 'Success' : 'Failed'}`);
@@ -78,14 +100,14 @@ async function testPaymentFlow() {
 
     // Step 5: Try to download after free limit (should require payment)
     console.log('\n5. Testing download after free limit exhausted...');
-    const finalCover = await client.post('/api/generate-cover', {
+    const finalCover = await makeRequest('POST', '/api/generate-cover', {
       ...coverData,
       bookTitle: "Final Test Book"
     });
 
     if (finalCover.data.success) {
       try {
-        const paidDownload = await client.post('/api/download-cover', { 
+        const paidDownload = await makeRequest('POST', '/api/download-cover', { 
           coverId: finalCover.data.bookCover?.id 
         });
         console.log('Download response:', paidDownload.data);
@@ -102,7 +124,7 @@ async function testPaymentFlow() {
     // Step 6: Test payment initialization
     console.log('\n6. Testing payment initialization...');
     try {
-      const paymentInit = await client.post('/api/initialize-payment', {
+      const paymentInit = await makeRequest('POST', '/api/initialize-payment', {
         email: 'test@example.com',
         amount: 100 // $1 in cents
       });
@@ -119,7 +141,7 @@ async function testPaymentFlow() {
 
     // Step 7: Check final user status
     console.log('\n7. Checking final user status...');
-    const finalStatus = await client.get('/api/user-status');
+    const finalStatus = await makeRequest('GET', '/api/user-status');
     console.log('Final status:', finalStatus.data);
 
     console.log('\n✅ Payment flow test completed successfully!');
