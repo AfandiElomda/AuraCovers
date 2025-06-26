@@ -13,8 +13,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = generateCoverSchema.parse(req.body);
       
-      // For demo purposes, create a guest user session
-      const guestUserId = req.session?.id || req.sessionID || `guest_${Date.now()}`;
+      // Get or create session-based user ID
+      if (!(req.session as any).userId) {
+        (req.session as any).userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+      const guestUserId = (req.session as any).userId;
       
       // Get or create user
       let user = await storage.getUser(guestUserId);
@@ -82,7 +85,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/download-cover", async (req, res) => {
     try {
       const validatedData = downloadCoverSchema.parse(req.body);
-      const guestUserId = req.sessionID || `guest_${Date.now()}`;
+      
+      // Use same session-based user ID
+      if (!(req.session as any).userId) {
+        (req.session as any).userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+      const guestUserId = (req.session as any).userId;
       
       const user = await storage.getUser(guestUserId);
       const cover = await storage.getBookCover(validatedData.coverId);
@@ -216,7 +224,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user status
   app.get("/api/user-status", async (req, res) => {
     try {
-      const guestUserId = req.sessionID || `guest_${Date.now()}`;
+      // Use same session-based user ID as other endpoints
+      if (!(req.session as any).userId) {
+        (req.session as any).userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+      const guestUserId = (req.session as any).userId;
       
       let user = await storage.getUser(guestUserId);
       if (!user) {
