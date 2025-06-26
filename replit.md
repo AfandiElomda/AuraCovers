@@ -116,6 +116,7 @@ The application follows a modern full-stack architecture with clear separation o
   - Created PaymentModal component with secure Paystack integration
   - Updated database schema to support payments and user credits
   - Added download management with payment validation
+  - Configured payment system for USD currency (requires Paystack account USD enablement)
 
 ## Changelog
 

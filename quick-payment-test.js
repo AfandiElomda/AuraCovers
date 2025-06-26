@@ -67,7 +67,7 @@ async function quickPaymentTest() {
     console.log('\n4. Testing payment initialization...');
     const paymentInit = await makeRequest('POST', '/api/initialize-payment', {
       email: 'test@example.com',
-      amount: 50000 // 500 NGN in kobo
+      amount: 100 // $1 in cents (USD)
     });
     
     if (paymentInit.data.success) {

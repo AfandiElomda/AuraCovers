@@ -146,14 +146,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const guestUserId = (req.session as any).userId;
       
-      // For development/demo purposes, provide a mock payment response if Paystack fails
+      // Try USD first, then fallback to NGN if needed
       try {
         const response = await axios.post(
           "https://api.paystack.co/transaction/initialize",
           {
             email: validatedData.email,
             amount: validatedData.amount,
-            currency: "NGN",
+            currency: "USD",
             metadata: {
               userId: guestUserId,
               credits: 10,
