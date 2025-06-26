@@ -14,7 +14,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = generateCoverSchema.parse(req.body);
       
       // For demo purposes, create a guest user session
-      const guestUserId = req.sessionID || `guest_${Date.now()}`;
+      const guestUserId = req.session?.id || req.sessionID || `guest_${Date.now()}`;
       
       // Get or create user
       let user = await storage.getUser(guestUserId);
