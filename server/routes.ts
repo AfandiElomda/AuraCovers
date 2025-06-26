@@ -1,10 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateCoverSchema } from "@shared/schema";
+import { generateCoverSchema, downloadCoverSchema, paymentSchema } from "@shared/schema";
 import { generateBookCover } from "./services/gemini";
 import path from "path";
 import fs from "fs";
+import axios from "axios";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Generate book cover endpoint
